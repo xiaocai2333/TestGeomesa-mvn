@@ -1,0 +1,1 @@
+spark-submit --master local[8] --jars ./dependencies/geomesa-spark-jts_2.11-2.1.1.jar,./dependencies/jts-core-1.14.0.jar,./dependencies/jts-io-1.14.0.jar,./dependencies/spatial4j-0.6.jar  --class TestGeomesa ./target/geomesa-spark-test-1.0-SNAPSHOT.jar
