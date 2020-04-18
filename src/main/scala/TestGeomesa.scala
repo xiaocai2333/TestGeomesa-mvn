@@ -313,7 +313,7 @@ object TestGeomesa {
 
 //    TestSTHausdorffDistance  Geometry has no this func
 
-    def TestSTConvehull(): Unit ={
+    def TestSTConvexHull(): Unit ={
       val funcName = "st_test"
       val filePath = dataPath + funcName + ".csv"
       val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("geos string").load(filePath).cache()
@@ -378,7 +378,7 @@ object TestGeomesa {
       "AsText"->(() =>            TestSTAsText()),
       "Centroid"->(() =>          TestSTCentroid()),
       "Contains"->(() =>          TestSTContains()),
-//      "Convehull"->(() =>         TestSTConvehull()),
+//      "ConvexHull"->(() =>         TestSTConvexHull()),
       "Crosses"->(() =>           TestSTCrosses()),
       "Distance"->(() =>          TestSTDistance()),
       "Equals"->(() =>            TestSTEquals()),
