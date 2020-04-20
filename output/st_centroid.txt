@@ -1,1 +1,1 @@
-geomesa_st_centroid_time:0.7708100933333334
+geomesa_st_centroid_time:0.8820250941666666

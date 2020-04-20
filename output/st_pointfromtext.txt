@@ -1,1 +1,1 @@
-geomesa_st_pointfromtext_time:0.7731498423333334
+geomesa_st_pointfromtext_time:0.8711221058333334

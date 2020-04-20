@@ -1,1 +1,1 @@
-geomesa_st_geometry_type_time:0.7808880188333333
+geomesa_st_geometry_type_time:0.876469604

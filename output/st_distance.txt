@@ -1,1 +1,1 @@
-geomesa_st_distance_time:0.7809603898333334
+geomesa_st_distance_time:0.892704313

@@ -1,1 +1,1 @@
-geomesa_st_area_time:0.7861534426666666
+geomesa_st_area_time:0.9041816914999999
