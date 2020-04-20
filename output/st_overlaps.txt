@@ -1,0 +1,1 @@
+geomesa_st_overlaps_time:0.805884444

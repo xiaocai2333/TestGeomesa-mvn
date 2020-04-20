@@ -1,0 +1,1 @@
+geomesa_st_intersects_time:0.8163685588333333

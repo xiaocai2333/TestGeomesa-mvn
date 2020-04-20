@@ -1,0 +1,1 @@
+geomesa_st_geomfromwkt_time:0.7683590725

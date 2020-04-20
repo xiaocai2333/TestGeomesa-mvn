@@ -1,0 +1,1 @@
+geomesa_st_point_time:0.7858498631666667

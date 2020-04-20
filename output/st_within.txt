@@ -1,0 +1,1 @@
+geomesa_st_within_time:0.800334196

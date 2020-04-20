@@ -1,0 +1,1 @@
+geomesa_st_equals_time:0.7978113346666666

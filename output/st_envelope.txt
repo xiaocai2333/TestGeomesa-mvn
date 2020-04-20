@@ -1,0 +1,1 @@
+geomesa_st_envelope_time:0.7831596691666666
