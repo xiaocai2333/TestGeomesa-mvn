@@ -2,7 +2,11 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql._
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.FileSystem
+import org.apache.hadoop.fs.Path
 import java.io.PrintWriter
+import java.nio.file.FileSystem
 
 import org.locationtech.geomesa.spark.jts._
 
@@ -21,6 +25,7 @@ object TestGeomesa {
     var func = ""
     var runTime = 6
     var isShow = false
+    var isHDFS = false
     if (args.length > 0){
       dataPath = args(0).toString
       outputPath = args(1).toString
@@ -28,7 +33,9 @@ object TestGeomesa {
       runTime = args(3).toInt
       isShow = args(4).toBoolean
     }
-    
+    if (dataPath.startsWith("hdfs")){
+      isHDFS = true
+    }
     var begin = System.nanoTime
     var end = System.nanoTime
 
@@ -41,6 +48,31 @@ object TestGeomesa {
       spark.sql("CACHE TABLE result")
       spark.sql("UNCACHE TABLE result")
     }
+
+
+zc
+    def writeTime(funcName : String, durTime : Double): Unit ={
+      if (isHDFS){
+        val strList = dataPath.split("/", 0)
+        val hdfsPath = strList(0) + strList(1) + strList(2)
+        println(hdfsPath)
+        val conf = new Configuration()
+        conf.set("fs.defaultFS", hdfsPath)
+        val fs = FileSystem.get(conf)
+        val output = fs.create(new Path(outputPath + funcName + ".txt"))
+        val writer = new PrintWriter(output)
+        try {
+          writer.writeprintln("geomesa_" + funcName + "_time:" + dur_time)
+        }
+        finally {
+          writer.close()
+        }
+      } else {
+        val writer = new PrintWriter(outputPath + funcName + ".txt")
+        writer.println("geomesa_" + funcName + "_time:" + durTime)
+        writer.close()
+      }
+    }
     
     def calculateTime(sql : String, funcName : String): Unit ={
       begin = System.nanoTime
@@ -49,10 +81,8 @@ object TestGeomesa {
         runSql(sql)
       }
       end = System.nanoTime
-      val dur_time = ((end - begin) / 1e9d) / runTime
-      val writer = new PrintWriter(outputPath + funcName + ".txt")
-      writer.println("geomesa_" + funcName + "_time:" + dur_time)
-      writer.close()
+      val durTime = ((end - begin) / 1e9d) / runTime
+      writeTime(funcName, durTime)
     }
 
     def filePathMap(funcName : String):String = funcName match {
