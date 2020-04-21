@@ -24,22 +24,36 @@ object TestGeomesa {
     var dataPath = "/home/zc/tests/data/10_3/"
     var outputPath = "/home/zc/tests/data/output/"
     var hdfsPath = "hdfs://spark1:9000"
+    var isHDFS = false
     var func = ""
+    var dataNums = 100
     var runTime = 6
     var isShow = false
-    var isHDFS = false
-    var dataNums = 100
-    if (args.length > 0){
-      dataPath = args(0)
-      outputPath = args(1)
-      func = args(2)
-      dataNums = args(3).toInt
-      val dataPower = Math.log10(dataNums).toInt
-      dataPath = dataPath + "10_" + dataPower.toString + "/"
-      outputPath = outputPath + "10_" + dataPower.toString + "/"
-      runTime = args(4).toInt
-      isShow = args(5).toBoolean
+    val argsList = args.toList
+    val argsMap = Parse.nextOption(Map(), argsList)
+    if(argsMap.contains('inputCsvPath)) {
+      dataPath = argsMap('inputCsvPath)
     }
+    if(argsMap.contains('outputLogPath)){
+      outputPath = argsMap('outputLogPath)
+    }
+    if(argsMap.contains('functionName)){
+      func = argsMap('functionName)
+    }
+    if(argsMap.contains('dataNums)){
+      dataNums = argsMap('dataNums).toInt
+    }
+    if(argsMap.contains('runTime)){
+      runTime = argsMap('runTime).toInt
+    }
+    if(argsMap.contains('isShowDF)){
+      isShow = argsMap('isShowDF).toBoolean
+    }
+
+    val dataPower = Math.log10(dataNums).toInt
+    dataPath = dataPath + "10_" + dataPower.toString + "/"
+    outputPath = outputPath + "10_" + dataPower.toString + "/"
+
     if (dataPath.startsWith("hdfs")){
       isHDFS = true
     }
@@ -73,7 +87,7 @@ object TestGeomesa {
       spark.sql("UNCACHE TABLE result")
     }
 
-    def writeTime(funcName : String, durTime : Double): Unit ={
+    def writeTime(funcName : String, durTimeArray : Array[Double]): Unit ={
       if (isHDFS){
         val conf = new Configuration()
         conf.set("fs.defaultFS", hdfsPath)
@@ -81,27 +95,35 @@ object TestGeomesa {
         val output = fs.create(new Path(outputPath + funcName + ".txt"))
         val writer = new PrintWriter(output)
         try {
-          writer.println("geomesa_" + funcName + "_time:" + durTime)
+          val i = 0
+          for (i <- 0 to runTime - 1) {
+            writer.println("geomesa_" + funcName + "_time:" + durTimeArray(i))
+          }
         }
         finally {
           writer.close()
         }
       } else {
         val writer = new PrintWriter(outputPath + funcName + ".txt")
-        writer.println("geomesa_" + funcName + "_time:" + durTime)
+        val i = 0
+        for (i <- 0 to runTime - 1) {
+          writer.println("geomesa_" + funcName + "_time:" + durTimeArray(i))
+        }
         writer.close()
       }
     }
     
     def calculateTime(sql : String, funcName : String): Unit ={
-      begin = System.nanoTime
       var i = 0
-      for(i <- 0 to runTime){
+      val durTimeArray = new Array[Double](runTime)
+      for(i <- 0 to runTime - 1){
+        begin = System.nanoTime()
         runSql(sql)
+        end = System.nanoTime()
+        val durTime = (end - begin) / 1e9d
+        durTimeArray(i) = durTime
       }
-      end = System.nanoTime
-      val durTime = ((end - begin) / 1e9d) / runTime
-      writeTime(funcName, durTime)
+      writeTime(funcName, durTimeArray)
     }
 
     def filePathMap(funcName : String):String = funcName match {
@@ -514,6 +536,36 @@ object TestGeomesa {
     testcases(func).apply
 
     // TODO: TestSTMakeValid, TestSTConvehull's sql
+  }
+}
+
+object Parse {
+  val usage =
+    """
+    Usage: spark-submit --master yarn --deploy-mode client --jars ./dependencies/jars  --class TestGeomesa ./target/xx.jar [-h] [-p] <inputCsvPath> [-o] <outputPath> [-f] functionName [-n] dataNums [-t] runTime [-s] isShowDF
+    """
+  type OptionMap = Map[Symbol, String]
+
+  def nextOption(map: OptionMap, list: List[String]) : OptionMap = {
+    list match {
+      case Nil => map
+      case "-h" :: other =>
+        nextOption(map ++ Map('help -> usage), other)
+      case "-p" :: value :: tail =>
+        nextOption(map ++ Map('inputCsvPath -> value.toString), tail)
+      case "-o" :: value :: tail =>
+        nextOption(map ++ Map('outputPath -> value.toString), tail)
+      case "-f" :: value :: tail =>
+        nextOption(map ++ Map('functionName -> value.toString), tail)
+      case "-n" :: value :: tail =>
+        nextOption(map ++ Map('dataNums -> value.toString), tail)
+      case "-t" :: value :: tail =>
+        nextOption(map ++ Map('runTime -> value.toString), tail)
+      case "-s" :: value :: tail =>
+        nextOption(map ++ Map('isShowDF -> value.toString), tail)
+      case option :: tail =>
+        nextOption(map, tail)
+    }
   }
 }
 
