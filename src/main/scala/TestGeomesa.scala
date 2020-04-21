@@ -47,7 +47,8 @@ object TestGeomesa {
     }
     if (isHDFS){
       val strList = dataPath.split("/", 0)
-      hdfsPath = strList(0) + strList(1) + strList(2)
+      hdfsPath = strList(0) + "//" + strList(2)
+      println(hdfsPath)
       val realPath = hdfsPath + outputPath
       val conf = new Configuration()
       conf.set("fs.defaultFS", hdfsPath)
