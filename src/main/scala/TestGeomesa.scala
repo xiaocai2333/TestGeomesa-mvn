@@ -5,10 +5,11 @@ import org.apache.spark.sql.functions._
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
-import java.io.PrintWriter
-import java.nio.file.FileSystem
+import java.io.{File, PrintWriter}
 
 import org.locationtech.geomesa.spark.jts._
+
+import scala.math._
 
 object TestGeomesa {
 
@@ -22,20 +23,45 @@ object TestGeomesa {
     import spark.implicits._
     var dataPath = "/home/zc/tests/data/10_3/"
     var outputPath = "/home/zc/tests/data/output/"
+    var hdfsPath = "hdfs://spark1:9000"
     var func = ""
     var runTime = 6
     var isShow = false
     var isHDFS = false
+    var dataNums = 100
     if (args.length > 0){
-      dataPath = args(0).toString
-      outputPath = args(1).toString
-      func = args(2).toString
-      runTime = args(3).toInt
-      isShow = args(4).toBoolean
+      dataPath = args(0)
+      outputPath = args(1)
+      func = args(2)
+      dataNums = args(3).toInt
+      val dataPower = Math.log10(dataNums).toInt
+      dataPath = dataPath + "10_" + dataPower.toString + "/"
+      outputPath = outputPath + "10_" + dataPower.toString + "/"
+      println(dataPath)
+      println(outputPath)
+      runTime = args(4).toInt
+      isShow = args(5).toBoolean
     }
     if (dataPath.startsWith("hdfs")){
       isHDFS = true
     }
+    if (isHDFS){
+      val strList = dataPath.split("/", 0)
+      hdfsPath = strList(0) + strList(1) + strList(2)
+      val realPath = hdfsPath + outputPath
+      val conf = new Configuration()
+      conf.set("fs.defaultFS", hdfsPath)
+      val fs = FileSystem.get(conf)
+      if (!fs.exists(new Path(realPath))){
+        fs.mkdirs(new Path(realPath))
+      }
+    } else {
+      val fp = new File(outputPath)
+      if (!fp.exists()){
+        fp.mkdirs()
+      }
+    }
+
     var begin = System.nanoTime
     var end = System.nanoTime
 
@@ -49,20 +75,15 @@ object TestGeomesa {
       spark.sql("UNCACHE TABLE result")
     }
 
-
-zc
     def writeTime(funcName : String, durTime : Double): Unit ={
       if (isHDFS){
-        val strList = dataPath.split("/", 0)
-        val hdfsPath = strList(0) + strList(1) + strList(2)
-        println(hdfsPath)
         val conf = new Configuration()
         conf.set("fs.defaultFS", hdfsPath)
         val fs = FileSystem.get(conf)
         val output = fs.create(new Path(outputPath + funcName + ".txt"))
         val writer = new PrintWriter(output)
         try {
-          writer.writeprintln("geomesa_" + funcName + "_time:" + dur_time)
+          writer.println("geomesa_" + funcName + "_time:" + durTime)
         }
         finally {
           writer.close()
@@ -474,7 +495,7 @@ zc
       "Distance"->(() =>          TestSTDistance()),
       "Equals"->(() =>            TestSTEquals()),
       "GeometryType"->(() =>      TestSTGeometryType()),
-//      "GeomFromText"->(() =>      TestSTGeomFromText()),
+      "GeomFromText"->(() =>      TestSTGeomFromText()),
       "GeomFromWKT"->(() =>       TestSTGeomFromWKT()),
       "Intersects"->(() =>        TestSTIntersects()),
       "IsSimple"->(() =>          TestSTIsSimple()),
