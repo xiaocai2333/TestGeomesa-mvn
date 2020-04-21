@@ -78,7 +78,7 @@ object TestGeomesa {
         val durTime = (end - begin) / 1e9d
         durTimeArray(i) = durTime
       }
-//      myDF.myWrite(funcName, durTimeArray)
+      myDF.myWrite(funcName, durTimeArray)
     }
 
     def filePathMap(funcName: String): String = funcName match {
@@ -528,7 +528,7 @@ class MyHDFS(outputPath: String) extends MyFS {
   def parseHDFS(): Unit = {
     var strList = outputPath.split("/", -1)
     hdfsPath = strList(0) + "//" + strList(2)
-    realPath = strList.takeRight(strList.length - 3).mkString("/")
+    realPath = "/" + strList.takeRight(strList.length - 3).mkString("/")
   }
 
   parseHDFS()
