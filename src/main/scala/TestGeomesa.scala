@@ -526,7 +526,7 @@ class MyHDFS(outputPath: String) extends MyFS {
   var realPath: String = "/test_data/"
 
   def parseHDFS(): Unit = {
-    var strList = outputPath.split("/", 0)
+    var strList = outputPath.split("/", -1)
     hdfsPath = strList(0) + "//" + strList(2)
     realPath = strList.takeRight(strList.length - 3).mkString("/")
   }
