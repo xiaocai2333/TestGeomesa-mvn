@@ -33,8 +33,8 @@ object TestGeomesa {
     if (argsMap.contains('inputCsvPath)) {
       dataPath = argsMap('inputCsvPath)
     }
-    if (argsMap.contains('outputLogPath)) {
-      outputPath = argsMap('outputLogPath)
+    if (argsMap.contains('outputPath)) {
+      outputPath = argsMap('outputPath)
     }
     if (argsMap.contains('functionName)) {
       func = argsMap('functionName)
