@@ -263,8 +263,15 @@ object TestGeomesa {
       val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("geos string").load(filePath).cache()
       dataDF.createOrReplaceTempView("simple")
       //       dataDF.show(20,0)
-      val sql = "select ST_IsSimple(ST_GeomFromText(geos)) from simple"
+      val sql1= "select ST_GeomFromText(geos) as geos from simple"
+      val df2 = spark.sql(sql1)
+      df2.createOrReplaceTempView("simple1")
+      spark.sql("CACHE TABLE simple1")
+
+      val sql = "select ST_IsSimple(geos) from simple1"
+//      val sql = "select ST_IsSimple(ST_GeomFromText(geos)) from simple"
       calculateTime(sql, funcName)
+      df2.unpersist()
       dataDF.unpersist()
     }
 
@@ -371,8 +378,14 @@ object TestGeomesa {
       val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("geos string").load(filePath).cache()
       dataDF.createOrReplaceTempView("centroid")
       //       dataDF.show(20,0)
-      val sql = "select ST_Centroid(ST_GeomFromText(geos)) from centroid"
+      val sql1= "select ST_GeomFromText(geos) as geos from centroid"
+      val df2 = spark.sql(sql1)
+      df2.createOrReplaceTempView("centroid2")
+      spark.sql("CACHE TABLE centroid2")
+
+      val sql = "select ST_Centroid(geos) from centroid2"
       calculateTime(sql, funcName)
+      df2.unpersist()
       dataDF.unpersist()
     }
 
