@@ -99,7 +99,6 @@ object TestGeomesa {
       val filePath = dataPath + fileName
       val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("x double, y double").load(filePath).cache()
       dataDF.createOrReplaceTempView("points")
-      //       dataDF.show(20,0)
       val sql = "select ST_Point(x, y) from points"
       calculateTime(sql, funcName)
       dataDF.unpersist()
@@ -115,7 +114,6 @@ object TestGeomesa {
       val filePath = dataPath + fileName
       val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("data string").load(filePath).cache()
       dataDF.createOrReplaceTempView("data")
-      //       dataDF.show(20,0)
       val sql = "select ST_PointFromText(data) from data"
       calculateTime(sql, funcName)
       dataDF.unpersist()
@@ -128,7 +126,6 @@ object TestGeomesa {
       val filePath = dataPath + fileName
       val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("data string").load(filePath).cache()
       dataDF.createOrReplaceTempView("data")
-      //       dataDF.show(20,0)
       val sql = "select ST_PolygonFromText(data) from data"
       calculateTime(sql, funcName)
       dataDF.unpersist()
@@ -141,9 +138,13 @@ object TestGeomesa {
       val filePath = dataPath + fileName
       val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("data string").load(filePath).cache()
       dataDF.createOrReplaceTempView("data")
-      //       dataDF.show(20,0)
-      val sql = "select ST_AsText(ST_GeomFromText(data)) from data"
+      val sql1 = "select ST_GeomFromText(data) as geos from data"
+      val tmpDF = spark.sql(sql1)
+      tmpDF.createOrReplaceTempView("asText")
+      spark.sql("CACHE TABLE asText")
+      val sql = "select ST_AsText(geos) from asText"
       calculateTime(sql, funcName)
+      tmpDF.unpersist()
       dataDF.unpersist()
     }
 
@@ -156,7 +157,6 @@ object TestGeomesa {
       val filePath = dataPath + fileName
       val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("data string").load(filePath).cache()
       dataDF.createOrReplaceTempView("data")
-      //       dataDF.show(20,0)
       val sql = "select ST_LineFromText(data) from data"
       calculateTime(sql, funcName)
       dataDF.unpersist()
@@ -169,7 +169,6 @@ object TestGeomesa {
       val filePath = dataPath + fileName
       val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("data string").load(filePath).cache()
       dataDF.createOrReplaceTempView("data")
-      //       dataDF.show(20,0)
       val sql = "select ST_GeomFromWKT(data) from data"
       calculateTime(sql, funcName)
       dataDF.unpersist()
@@ -182,7 +181,6 @@ object TestGeomesa {
       val filePath = dataPath + fileName
       val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("data string").load(filePath).cache()
       dataDF.createOrReplaceTempView("data")
-      //       dataDF.show(20,0)
       val sql = "select ST_GeomFromText(data) from data"
       calculateTime(sql, funcName)
       dataDF.unpersist()
@@ -195,11 +193,15 @@ object TestGeomesa {
       println(funcName)
       val fileName = filePathMap(funcName) + ".csv"
       val filePath = dataPath + fileName
-      val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("geos string").load(filePath).cache()
-      dataDF.createOrReplaceTempView("valid")
-      //       dataDF.show(20,0)
-      val sql = "select ST_IsValid(ST_GeomFromText(geos)) from valid"
+      val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("data string").load(filePath).cache()
+      dataDF.createOrReplaceTempView("data")
+      val sql1 = "select ST_GeomFromText(data) as geos from data"
+      val tmpDF = spark.sql(sql1)
+      tmpDF.createOrReplaceTempView("isValid")
+      spark.sql("CACHE TABLE isValid")
+      val sql = "select ST_IsValid(geos) from isValid"
       calculateTime(sql, funcName)
+      tmpDF.unpersist()
       dataDF.unpersist()
     }
 
@@ -209,10 +211,14 @@ object TestGeomesa {
       val fileName = filePathMap(funcName) + ".csv"
       val filePath = dataPath + fileName
       val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("left string, right string").load(filePath).cache()
-      dataDF.createOrReplaceTempView("equals")
-      //       dataDF.show(20,0)
-      val sql = "select ST_Equals(ST_GeomFromText(left), ST_GeomFromText(right)) from equals"
+      dataDF.createOrReplaceTempView("data")
+      val sql1 = "select ST_GeomFromText(left) as left_geos, ST_GeomFromText(right) as right_geos from data"
+      val tmpDF = spark.sql(sql1)
+      tmpDF.createOrReplaceTempView("equals")
+      spark.sql("CACHE TABLE equals")
+      val sql = "select ST_Equals(left_geos, right_geos) from equals"
       calculateTime(sql, funcName)
+      tmpDF.unpersist()
       dataDF.unpersist()
     }
 
@@ -222,10 +228,14 @@ object TestGeomesa {
       val fileName = filePathMap(funcName) + ".csv"
       val filePath = dataPath + fileName
       val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("left string, right string").load(filePath).cache()
-      dataDF.createOrReplaceTempView("touches")
-      //       dataDF.show(20,0)
-      val sql = "select ST_Touches(ST_GeomFromText(left), ST_GeomFromText(right)) from touches"
+      dataDF.createOrReplaceTempView("data")
+      val sql1 = "select ST_GeomFromText(left) as left_geos, ST_GeomFromText(right) as right_geos from data"
+      val tmpDF = spark.sql(sql1)
+      tmpDF.createOrReplaceTempView("touches")
+      spark.sql("CACHE TABLE touches")
+      val sql = "select ST_Touches(left_geos, right_geos) from touches"
       calculateTime(sql, funcName)
+      tmpDF.unpersist()
       dataDF.unpersist()
     }
 
@@ -235,10 +245,14 @@ object TestGeomesa {
       val fileName = filePathMap(funcName) + ".csv"
       val filePath = dataPath + fileName
       val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("left string, right string").load(filePath).cache()
-      dataDF.createOrReplaceTempView("overlaps")
-      //       dataDF.show(20,0)
-      val sql = "select ST_Overlaps(ST_GeomFromText(left), ST_GeomFromText(right)) from overlaps"
+      dataDF.createOrReplaceTempView("data")
+      val sql1 = "select ST_GeomFromText(left) as left_geos, ST_GeomFromText(right) as right_geos from data"
+      val tmpDF = spark.sql(sql1)
+      tmpDF.createOrReplaceTempView("overlaps")
+      spark.sql("CACHE TABLE overlaps")
+      val sql = "select ST_Overlaps(left_geos, right_geos) from overlaps"
       calculateTime(sql, funcName)
+      tmpDF.unpersist()
       dataDF.unpersist()
     }
 
@@ -248,10 +262,14 @@ object TestGeomesa {
       val fileName = filePathMap(funcName) + ".csv"
       val filePath = dataPath + fileName
       val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("left string, right string").load(filePath).cache()
-      dataDF.createOrReplaceTempView("crosses")
-      //       dataDF.show(20,0)
-      val sql = "select ST_Crosses(ST_GeomFromText(left), ST_GeomFromText(right)) from crosses"
+      dataDF.createOrReplaceTempView("data")
+      val sql1 = "select ST_GeomFromText(left) as left_geos, ST_GeomFromText(right) as right_geos from data"
+      val tmpDF = spark.sql(sql1)
+      tmpDF.createOrReplaceTempView("crosses")
+      spark.sql("CACHE TABLE crosses")
+      val sql = "select ST_Crosses(left_geos, right_geos) from crosses"
       calculateTime(sql, funcName)
+      tmpDF.unpersist()
       dataDF.unpersist()
     }
 
@@ -260,18 +278,15 @@ object TestGeomesa {
       println(funcName)
       val fileName = filePathMap(funcName) + ".csv"
       val filePath = dataPath + fileName
-      val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("geos string").load(filePath).cache()
-      dataDF.createOrReplaceTempView("simple")
-      //       dataDF.show(20,0)
-      val sql1= "select ST_GeomFromText(geos) as geos from simple"
-      val df2 = spark.sql(sql1)
-      df2.createOrReplaceTempView("simple1")
-      spark.sql("CACHE TABLE simple1")
-
-      val sql = "select ST_IsSimple(geos) from simple1"
-//      val sql = "select ST_IsSimple(ST_GeomFromText(geos)) from simple"
+      val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("data string").load(filePath).cache()
+      dataDF.createOrReplaceTempView("data")
+      val sql1= "select ST_GeomFromText(data) as geos from data"
+      val tmpDF = spark.sql(sql1)
+      tmpDF.createOrReplaceTempView("simple")
+      spark.sql("CACHE TABLE simple")
+      val sql = "select ST_IsSimple(geos) from simple"
       calculateTime(sql, funcName)
-      df2.unpersist()
+      tmpDF.unpersist()
       dataDF.unpersist()
     }
 
@@ -280,30 +295,17 @@ object TestGeomesa {
       println(funcName)
       val fileName = filePathMap(funcName) + ".csv"
       val filePath = dataPath + fileName
-      val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("geos string").load(filePath).cache()
-      dataDF.createOrReplaceTempView("geometry_type")
-      //       dataDF.show(20,0)
-      val sql = "select ST_GeometryType(ST_GeomFromText(geos)) from geometry_type"
+      val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("data string").load(filePath).cache()
+      dataDF.createOrReplaceTempView("data")
+      val sql1= "select ST_GeomFromText(data) as geos from data"
+      val tmpDF = spark.sql(sql1)
+      tmpDF.createOrReplaceTempView("geometryType")
+      spark.sql("CACHE TABLE geometryType")
+      val sql = "select ST_GeometryType(geos) from geometryType"
       calculateTime(sql, funcName)
+      tmpDF.unpersist()
       dataDF.unpersist()
     }
-
-    //    TestSTMakeValid()  Geomesa has no this func
-    //    def TestSTMakeValid(): Unit ={
-    //      var filePath = dataPath.concat("st_make_valid.csv")
-    //      val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("geos string").load(filePath).cache()
-    //      dataDF.createOrReplaceTempView("make_valid")
-    ////       dataDF.show(20,0)
-    //      val sql = "select ST_MakeValid(ST_GeomFromText(geos)) from make_valid"
-    //      begin = System.nanoTime
-    //      runSql(sql)
-    //      end = System.nanoTime
-    //      println("geomesa_st_make_valid_time: " + (end - begin) / 1e9d)
-    //      dataDF.unpersist()
-    //    }
-
-    //    TestSTSimplifyPreserveTopology    Geomesa has no this func
-    //    TestSTPolygonFromEnvelope Geomesa has no this func
 
     def TestSTContains(): Unit = {
       val funcName = "st_contains"
@@ -311,10 +313,14 @@ object TestGeomesa {
       val fileName = filePathMap(funcName) + ".csv"
       val filePath = dataPath + fileName
       val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("left string, right string").load(filePath).cache()
-      dataDF.createOrReplaceTempView("contains")
-      //       dataDF.show(20,0)
-      val sql = "select ST_Contains(ST_GeomFromText(left), ST_GeomFromText(right)) from contains"
+      dataDF.createOrReplaceTempView("data")
+      val sql1 = "select ST_GeomFromText(left) as left_geos, ST_GeomFromText(right) as right_geos from data"
+      val tmpDF = spark.sql(sql1)
+      tmpDF.createOrReplaceTempView("contains")
+      spark.sql("CACHE TABLE contains")
+      val sql = "select ST_Contains(left_geos, right_geos) from contains"
       calculateTime(sql, funcName)
+      tmpDF.unpersist()
       dataDF.unpersist()
     }
 
@@ -324,10 +330,14 @@ object TestGeomesa {
       val fileName = filePathMap(funcName) + ".csv"
       val filePath = dataPath + fileName
       val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("left string, right string").load(filePath).cache()
-      dataDF.createOrReplaceTempView("intersects")
-      //       dataDF.show(20,0)
-      val sql = "select ST_Intersects(ST_GeomFromText(left), ST_GeomFromText(right)) from intersects"
+      dataDF.createOrReplaceTempView("data")
+      val sql1 = "select ST_GeomFromText(left) as left_geos, ST_GeomFromText(right) as right_geos from data"
+      val tmpDF = spark.sql(sql1)
+      tmpDF.createOrReplaceTempView("intersects")
+      spark.sql("CACHE TABLE intersects")
+      val sql = "select ST_Intersects(left_geos, right_geos) from intersects"
       calculateTime(sql, funcName)
+      tmpDF.unpersist()
       dataDF.unpersist()
     }
 
@@ -337,10 +347,14 @@ object TestGeomesa {
       val fileName = filePathMap(funcName) + ".csv"
       val filePath = dataPath + fileName
       val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("left string, right string").load(filePath).cache()
-      dataDF.createOrReplaceTempView("within")
-      //       dataDF.show(20,0)
-      val sql = "select ST_Within(ST_GeomFromText(left), ST_GeomFromText(right)) from within"
+      dataDF.createOrReplaceTempView("data")
+      val sql1 = "select ST_GeomFromText(left) as left_geos, ST_GeomFromText(right) as right_geos from data"
+      val tmpDF = spark.sql(sql1)
+      tmpDF.createOrReplaceTempView("withIn")
+      spark.sql("CACHE TABLE withIn")
+      val sql = "select ST_Within(left_geos, right_geos) from withIn"
       calculateTime(sql, funcName)
+      tmpDF.unpersist()
       dataDF.unpersist()
     }
 
@@ -350,10 +364,14 @@ object TestGeomesa {
       val fileName = filePathMap(funcName) + ".csv"
       val filePath = dataPath + fileName
       val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("left string, right string").load(filePath).cache()
-      dataDF.createOrReplaceTempView("distance")
-      //       dataDF.show(20,0)
-      val sql = "select ST_Distance(ST_GeomFromText(left), ST_GeomFromText(right)) from distance"
+      dataDF.createOrReplaceTempView("data")
+      val sql1 = "select ST_GeomFromText(left) as left_geos, ST_GeomFromText(right) as right_geos from data"
+      val tmpDF = spark.sql(sql1)
+      tmpDF.createOrReplaceTempView("distance")
+      spark.sql("CACHE TABLE distance")
+      val sql = "select ST_Distance(left_geos, right_geos) from distance"
       calculateTime(sql, funcName)
+      tmpDF.unpersist()
       dataDF.unpersist()
     }
 
@@ -362,11 +380,15 @@ object TestGeomesa {
       println(funcName)
       val fileName = filePathMap(funcName) + ".csv"
       val filePath = dataPath + fileName
-      val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("geos string").load(filePath).cache()
-      dataDF.createOrReplaceTempView("area")
-      //       dataDF.show(20,0)
-      val sql = "select ST_Area(ST_GeomFromText(geos)) from area"
+      val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("data string").load(filePath).cache()
+      dataDF.createOrReplaceTempView("data")
+      val sql1 = "select ST_GeomFromText(data) as geos from data"
+      val tmpDF = spark.sql(sql1)
+      tmpDF.createOrReplaceTempView("area")
+      spark.sql("CACHE TABLE area")
+      val sql = "select ST_Area(geos) from area"
       calculateTime(sql, funcName)
+      tmpDF.unpersist()
       dataDF.unpersist()
     }
 
@@ -375,17 +397,16 @@ object TestGeomesa {
       println(funcName)
       val fileName = filePathMap(funcName) + ".csv"
       val filePath = dataPath + fileName
-      val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("geos string").load(filePath).cache()
-      dataDF.createOrReplaceTempView("centroid")
-      //       dataDF.show(20,0)
-      val sql1= "select ST_GeomFromText(geos) as geos from centroid"
-      val df2 = spark.sql(sql1)
-      df2.createOrReplaceTempView("centroid2")
-      spark.sql("CACHE TABLE centroid2")
+      val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("data string").load(filePath).cache()
+      dataDF.createOrReplaceTempView("data")
+      val sql1= "select ST_GeomFromText(data) as geos from data"
+      val tmpDF = spark.sql(sql1)
+      tmpDF.createOrReplaceTempView("centroid")
+      spark.sql("CACHE TABLE centroid")
 
-      val sql = "select ST_Centroid(geos) from centroid2"
+      val sql = "select ST_Centroid(geos) from centroid"
       calculateTime(sql, funcName)
-      df2.unpersist()
+      tmpDF.unpersist()
       dataDF.unpersist()
     }
 
@@ -394,26 +415,32 @@ object TestGeomesa {
       println(funcName)
       val fileName = filePathMap(funcName) + ".csv"
       val filePath = dataPath + fileName
-      val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("geos string").load(filePath).cache()
-      dataDF.createOrReplaceTempView("length")
-      //       dataDF.show(20,0)
-      val sql = "select ST_Length(ST_GeomFromText(geos)) from length"
+      val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("data string").load(filePath).cache()
+      dataDF.createOrReplaceTempView("data")
+      val sql1= "select ST_GeomFromText(data) as geos from data"
+      val tmpDF = spark.sql(sql1)
+      tmpDF.createOrReplaceTempView("length")
+      spark.sql("CACHE TABLE length")
+      val sql = "select ST_Length(geos) from length"
       calculateTime(sql, funcName)
+      tmpDF.unpersist()
       dataDF.unpersist()
     }
 
-    //    TestSTHausdorffDistance  Geometry has no this func
-
     def TestSTConvexHull(): Unit = {
-      val funcName = "st_test"
+      val funcName = "st_convexhull"
       println(funcName)
       val fileName = filePathMap(funcName) + ".csv"
       val filePath = dataPath + fileName
-      val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("geos string").load(filePath).cache()
-      dataDF.createOrReplaceTempView("convexhull")
-      //       dataDF.show(20,0)
+      val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("data string").load(filePath).cache()
+      dataDF.createOrReplaceTempView("data")
+      val sql1= "select ST_GeomFromText(data) as geos from data"
+      val tmpDF = spark.sql(sql1)
+      tmpDF.createOrReplaceTempView("convexhull")
+      spark.sql("CACHE TABLE convexhull")
       val sql = "select ST_ConvexHull(ST_GeomFromText(geos)) from convexhull"
       calculateTime(sql, funcName)
+      tmpDF.unpersist()
       dataDF.unpersist()
     }
 
@@ -422,11 +449,15 @@ object TestGeomesa {
       println(funcName)
       val fileName = filePathMap(funcName) + ".csv"
       val filePath = dataPath + fileName
-      val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("geos string").load(filePath).cache()
-      dataDF.createOrReplaceTempView("npoints")
-      //       dataDF.show(20,0)
-      val sql = "select ST_NumPoints(ST_GeomFromText(geos)) from npoints"
+      val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("data string").load(filePath).cache()
+      dataDF.createOrReplaceTempView("data")
+      val sql1= "select ST_GeomFromText(data) as geos from data"
+      val tmpDF = spark.sql(sql1)
+      tmpDF.createOrReplaceTempView("npoints")
+      spark.sql("CACHE TABLE npoints")
+      val sql = "select ST_NumPoints(geos) from npoints"
       calculateTime(sql, funcName)
+      tmpDF.unpersist()
       dataDF.unpersist()
     }
 
@@ -435,11 +466,15 @@ object TestGeomesa {
       println(funcName)
       val fileName = filePathMap(funcName) + ".csv"
       val filePath = dataPath + fileName
-      val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("geos string").load(filePath).cache()
-      dataDF.createOrReplaceTempView("envelope")
-      //       dataDF.show(20,0)
-      val sql = "select ST_Envelope(ST_GeomFromText(geos)) from envelope"
+      val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("data string").load(filePath).cache()
+      dataDF.createOrReplaceTempView("data")
+      val sql1= "select ST_GeomFromText(data) as geos from data"
+      val tmpDF = spark.sql(sql1)
+      tmpDF.createOrReplaceTempView("envelope")
+      spark.sql("CACHE TABLE envelope")
+      val sql = "select ST_Envelope(geos) from envelope"
       calculateTime(sql, funcName)
+      tmpDF.unpersist()
       dataDF.unpersist()
     }
 
@@ -448,28 +483,17 @@ object TestGeomesa {
       println(funcName)
       val fileName = filePathMap(funcName) + ".csv"
       val filePath = dataPath + fileName
-      val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("geos string").load(filePath).cache()
-      dataDF.createOrReplaceTempView("buffer")
-      //       dataDF.show(20,0)
-      val sql = "select ST_BufferPoint(ST_GeomFromText(geos), 1.2) from buffer"
+      val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("data string").load(filePath).cache()
+      dataDF.createOrReplaceTempView("data")
+      val sql1= "select ST_GeomFromText(data) as geos from data"
+      val tmpDF = spark.sql(sql1)
+      tmpDF.createOrReplaceTempView("buffer")
+      spark.sql("CACHE TABLE buffer")
+      val sql = "select ST_BufferPoint(geos, 1.2) from buffer"
       calculateTime(sql, funcName)
+      tmpDF.unpersist()
       dataDF.unpersist()
     }
-
-    //    TestSTUnionAggr()
-    //    TestSTEnvelopeAggr()
-
-    //    def TestSTTranslate(): Unit ={
-    //      val funcName = "st_transform"
-    //      println(funcName)
-    //      val filePath = dataPath + fileName
-    //      val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("geos string").load(filePath).cache()
-    //      dataDF.createOrReplaceTempView("translate")
-    ////       dataDF.show(20,0)
-    //      val sql = "select ST_Translate(ST_GeomFromText(geos), 'epsg:4326', 'epsg:3857') from translate"
-    //      calculateTime(sql, funcName)
-    //      dataDF.unpersist()
-    //    }
 
     val testcases = Map(
       "Point" -> (() => TestSTPoint()),
@@ -478,19 +502,19 @@ object TestGeomesa {
       "AsText" -> (() => TestSTAsText()),
       "Centroid" -> (() => TestSTCentroid()),
       "Contains" -> (() => TestSTContains()),
-      //      "ConvexHull"->(() =>         TestSTConvexHull()),
+//      "ConvexHull"->(() =>         TestSTConvexHull()),
       "Crosses" -> (() => TestSTCrosses()),
       "Distance" -> (() => TestSTDistance()),
       "Equals" -> (() => TestSTEquals()),
       "GeometryType" -> (() => TestSTGeometryType()),
-      "GeomFromText" -> (() => TestSTGeomFromText()),
+//      "GeomFromText" -> (() => TestSTGeomFromText()),
       "GeomFromWKT" -> (() => TestSTGeomFromWKT()),
       "Intersects" -> (() => TestSTIntersects()),
       "IsSimple" -> (() => TestSTIsSimple()),
       "IsValid" -> (() => TestSTIsValid()),
       "Length" -> (() => TestSTLength()),
       "LineStringFromText" -> (() => TestSTLineStringFromText()),
-      //      "MakeValid"->(() =>         TestSTMakeValid()),
+//      "MakeValid"->(() =>         TestSTMakeValid()),
       "NPoints" -> (() => TestSTNPoints()),
       "Touches" -> (() => TestSTTouches()),
       "Overlaps" -> (() => TestSTOverlaps()),
@@ -498,12 +522,11 @@ object TestGeomesa {
       "PolygonFromText" -> (() => TestSTPolygonFromText()),
       "Envelope" -> (() => TestSTEnvelope()),
       "Buffer" -> (() => TestSTBuffer()),
-      //      "Translate"->(() =>         TestSTTranslate()),
+//      "Translate"->(() =>         TestSTTranslate()),
     )
 
     testcases(func).apply
 
-    // TODO: TestSTMakeValid, TestSTConvehull's sql
   }
 }
 
