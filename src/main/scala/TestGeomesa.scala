@@ -18,11 +18,33 @@ import scala.math._
 object TestGeomesa {
 
   def main(args: Array[String]) {
+    def writeFile(filename: String, s: String): Unit = {
+      val file = new File(filename)
+      val bw = new BufferedWriter(new FileWriter(file))
+      bw.write(s)
+      bw.close()
+    }
+    def getCurrentTime():String = {
+         val formatDate = new SimpleDateFormat("yyyy-MM-dd:hhmmss")
+         val now  = Calendar.getInstance().getTime
+         formatDate.format(now)
+    }
+
+
+ 
+
+    def isAdult(age: String) = {
+      val line = getCurrentTime()
+      writeFile("/home/zc/mesa_issimple", line)
+      true
+    }
 
     val spark = SparkSession.builder()
       .appName("geomesa-spark profile")
       .getOrCreate()
       .withJTS
+
+    spark.udf.register("isAdult", isAdult _)
 
     import spark.implicits._
     var dataPath = "/home/zc/tests/data/10_3/"
@@ -69,12 +91,6 @@ object TestGeomesa {
       df.createOrReplaceTempView("result")
       spark.sql("CACHE TABLE result")
       spark.sql("UNCACHE TABLE result")
-    }
-
-    def getCurrentTime():String = {
-         val formatDate = new SimpleDateFormat("yyyy-MM-dd:hhmmss")
-         val now  = Calendar.getInstance().getTime
-         formatDate.format(now)
     }
 
     def calculateTime(sql: String, funcName: String): Unit = {
@@ -282,31 +298,23 @@ object TestGeomesa {
       dataDF.unpersist()
     }
 
-    def writeFile(filename: String, s: String): Unit = {
-      val file = new File(filename)
-      val bw = new BufferedWriter(new FileWriter(file))
-      bw.write(s)
-      bw.close()
-    }
-
-    def TestSTIsSimple(): Unit = {
+   def TestSTIsSimple(): Unit = {
       val funcName = "st_issimple"
       println(funcName)
       val fileName = filePathMap(funcName) + ".csv"
       val filePath = dataPath + fileName
       val dataDF = spark.read.format("csv").option("header", false).option("delimiter", "|").schema("data string").load(filePath).cache()
       dataDF.createOrReplaceTempView("data")
-      val sql1= "select ST_GeomFromText(data) as geos from data"
-      val tmpDF = spark.sql(sql1)
-      tmpDF.createOrReplaceTempView("simple")
-      spark.sql("CACHE TABLE simple")
-      val sql = "select ST_IsSimple(geos) from simple"
+//      val sql1= "select ST_GeomFromText(data) as geos from data"
+//      val tmpDF = spark.sql(sql1)
+//      tmpDF.createOrReplaceTempView("simple")
+//      spark.sql("CACHE TABLE simple")
+      //val sql = "select ST_IsSimple(geos) from simple"
+      val sql = "select isAdult(data) from data"
       calculateTime(sql, funcName)
-      tmpDF.unpersist()
+//      tmpDF.unpersist()
       dataDF.unpersist()
-      val line = getCurrentTime()
-      writeFile("/home/zilliz/mesa_issimple", line)
-    }
+      }
 
     def TestSTGeometryType(): Unit = {
       val funcName = "st_geometry_type"
