@@ -35,7 +35,7 @@ object TestGeomesa {
 
     def isAdult(age: String) = {
       val line = getCurrentTime()
-      writeFile("/home/zc/mesa_issimple", line)
+      writeFile("/home/zilliz/mesa_issimple", line)
       true
     }
 
