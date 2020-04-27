@@ -5,7 +5,10 @@ import org.apache.spark.sql.functions._
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
-import java.io.{File, PrintWriter}
+import java.io._ 
+
+import java.text.SimpleDateFormat
+import java.util.Calendar
 
 import javax.rmi.CORBA.Util
 import org.locationtech.geomesa.spark.jts._
@@ -66,6 +69,12 @@ object TestGeomesa {
       df.createOrReplaceTempView("result")
       spark.sql("CACHE TABLE result")
       spark.sql("UNCACHE TABLE result")
+    }
+
+    def getCurrentTime():String = {
+         val formatDate = new SimpleDateFormat("yyyy-MM-dd:hhmmss")
+         val now  = Calendar.getInstance().getTime
+         formatDate.format(now)
     }
 
     def calculateTime(sql: String, funcName: String): Unit = {
@@ -273,6 +282,13 @@ object TestGeomesa {
       dataDF.unpersist()
     }
 
+    def writeFile(filename: String, s: String): Unit = {
+      val file = new File(filename)
+      val bw = new BufferedWriter(new FileWriter(file))
+      bw.write(s)
+      bw.close()
+    }
+
     def TestSTIsSimple(): Unit = {
       val funcName = "st_issimple"
       println(funcName)
@@ -288,6 +304,8 @@ object TestGeomesa {
       calculateTime(sql, funcName)
       tmpDF.unpersist()
       dataDF.unpersist()
+      val line = getCurrentTime()
+      writeFile("/home/zilliz/mesa_issimple", line)
     }
 
     def TestSTGeometryType(): Unit = {
